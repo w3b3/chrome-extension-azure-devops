@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Azure DevOps PR Monitor",
-  "version": "1.0.0",
+  "version": "1.1",
   "description": "Monitor Azure DevOps pull requests — get notified on pipeline failures, new pushes, and reviewer actions.",
   "permissions": [
     "alarms",

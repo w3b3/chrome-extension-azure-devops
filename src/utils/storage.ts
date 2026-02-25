@@ -1,51 +1,71 @@
 import type { ExtensionSettings } from "../types/settings.js";
 import type { PRSnapshot } from "../types/state.js";
 
-/** Keys used in chrome.storage.local */
-interface StorageSchema {
+/** Settings are stored in sync storage so they persist across reinstalls. */
+interface SyncStorageSchema {
   settings: ExtensionSettings;
+}
+
+/** Ephemeral/large data stays in local storage. */
+interface LocalStorageSchema {
   snapshots: PRSnapshot[];
   lastPollTimestamp: number;
 }
 
-type StorageKey = keyof StorageSchema;
+type SyncStorageKey = keyof SyncStorageSchema;
+type LocalStorageKey = keyof LocalStorageSchema;
 
-async function getFromStorage<K extends StorageKey>(
+async function getFromSyncStorage<K extends SyncStorageKey>(
   key: K,
-  defaultValue: StorageSchema[K],
-): Promise<StorageSchema[K]> {
-  const result = await chrome.storage.local.get(key);
-  return (result[key] as StorageSchema[K] | undefined) ?? defaultValue;
+  defaultValue: SyncStorageSchema[K],
+): Promise<SyncStorageSchema[K]> {
+  const result = await chrome.storage.sync.get(key);
+  return (result[key] as SyncStorageSchema[K] | undefined) ?? defaultValue;
 }
 
-async function setInStorage<K extends StorageKey>(
+async function setInSyncStorage<K extends SyncStorageKey>(
   key: K,
-  value: StorageSchema[K],
+  value: SyncStorageSchema[K],
+): Promise<void> {
+  await chrome.storage.sync.set({ [key]: value });
+}
+
+async function getFromLocalStorage<K extends LocalStorageKey>(
+  key: K,
+  defaultValue: LocalStorageSchema[K],
+): Promise<LocalStorageSchema[K]> {
+  const result = await chrome.storage.local.get(key);
+  return (result[key] as LocalStorageSchema[K] | undefined) ?? defaultValue;
+}
+
+async function setInLocalStorage<K extends LocalStorageKey>(
+  key: K,
+  value: LocalStorageSchema[K],
 ): Promise<void> {
   await chrome.storage.local.set({ [key]: value });
 }
 
 export async function getSettings(): Promise<ExtensionSettings> {
   const { DEFAULT_SETTINGS: defaults } = await import("../types/settings.js");
-  return getFromStorage("settings", defaults);
+  return getFromSyncStorage("settings", defaults);
 }
 
 export async function saveSettings(settings: ExtensionSettings): Promise<void> {
-  await setInStorage("settings", settings);
+  await setInSyncStorage("settings", settings);
 }
 
 export async function getSnapshots(): Promise<PRSnapshot[]> {
-  return getFromStorage("snapshots", []);
+  return getFromLocalStorage("snapshots", []);
 }
 
 export async function saveSnapshots(snapshots: PRSnapshot[]): Promise<void> {
-  await setInStorage("snapshots", snapshots);
+  await setInLocalStorage("snapshots", snapshots);
 }
 
 export async function getLastPollTimestamp(): Promise<number> {
-  return getFromStorage("lastPollTimestamp", 0);
+  return getFromLocalStorage("lastPollTimestamp", 0);
 }
 
 export async function saveLastPollTimestamp(timestamp: number): Promise<void> {
-  await setInStorage("lastPollTimestamp", timestamp);
+  await setInLocalStorage("lastPollTimestamp", timestamp);
 }

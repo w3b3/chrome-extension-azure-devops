@@ -36,7 +36,7 @@ chrome.runtime.onStartup.addListener(() => {
 
 // Listen for settings changes to reset the alarm
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes["settings"]) {
+  if (area === "sync" && changes["settings"]) {
     void setupAlarm();
   }
 });
