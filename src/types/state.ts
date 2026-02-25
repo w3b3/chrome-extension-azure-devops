@@ -39,7 +39,8 @@ export type ChangeType =
   | "pipeline_recovered"
   | "new_push"
   | "vote_changed"
-  | "merge_conflict";
+  | "merge_conflict"
+  | "pr_merged";
 
 export interface ChangeEvent {
   type: ChangeType;
@@ -49,4 +50,19 @@ export interface ChangeEvent {
   description: string;
   /** Additional details (e.g. which pipeline, which reviewer) */
   details?: string;
+}
+
+/** Rolling history of PRs seen by the extension */
+export interface SeenPRRecord {
+  /** Same composite key as PRSnapshot */
+  key: string;
+  organization: string;
+  project: string;
+  repositoryName: string;
+  pullRequestId: number;
+  title: string;
+  /** Last observed lifecycle state */
+  lastKnownState: "active" | "merged";
+  /** Last time this PR was observed/verified */
+  lastSeenAt: number;
 }

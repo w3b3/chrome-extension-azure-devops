@@ -1,5 +1,5 @@
 import type { ExtensionSettings } from "../types/settings.js";
-import type { PRSnapshot } from "../types/state.js";
+import type { PRSnapshot, SeenPRRecord } from "../types/state.js";
 
 /** Settings are stored in sync storage so they persist across reinstalls. */
 interface SyncStorageSchema {
@@ -10,6 +10,8 @@ interface SyncStorageSchema {
 interface LocalStorageSchema {
   snapshots: PRSnapshot[];
   lastPollTimestamp: number;
+  seenPRs: SeenPRRecord[];
+  mergedCelebrationAckAt: number;
 }
 
 type SyncStorageKey = keyof SyncStorageSchema;
@@ -68,4 +70,20 @@ export async function getLastPollTimestamp(): Promise<number> {
 
 export async function saveLastPollTimestamp(timestamp: number): Promise<void> {
   await setInLocalStorage("lastPollTimestamp", timestamp);
+}
+
+export async function getSeenPRs(): Promise<SeenPRRecord[]> {
+  return getFromLocalStorage("seenPRs", []);
+}
+
+export async function saveSeenPRs(seenPRs: SeenPRRecord[]): Promise<void> {
+  await setInLocalStorage("seenPRs", seenPRs);
+}
+
+export async function getMergedCelebrationAckAt(): Promise<number> {
+  return getFromLocalStorage("mergedCelebrationAckAt", 0);
+}
+
+export async function saveMergedCelebrationAckAt(timestamp: number): Promise<void> {
+  await setInLocalStorage("mergedCelebrationAckAt", timestamp);
 }

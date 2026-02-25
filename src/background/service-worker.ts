@@ -1,6 +1,12 @@
 import { getSettings } from "../utils/storage.js";
+import {
+  getSnapshots,
+  getSeenPRs,
+  getMergedCelebrationAckAt,
+} from "../utils/storage.js";
 import { pollAll } from "./poller.js";
 import { setupNotificationClickHandler } from "./notifier.js";
+import { updateBadge } from "../utils/badge.js";
 
 const ALARM_NAME = "pr-poll";
 
@@ -47,6 +53,21 @@ chrome.runtime.onMessage.addListener(
     if (message?.type === "poll-now") {
       void pollAll().then(() => sendResponse({ success: true }));
       return true; // Keep message channel open for async response
+    }
+    if (message?.type === "refresh-badge") {
+      void (async () => {
+        const [snapshots, seenPRs, ackAt] = await Promise.all([
+          getSnapshots(),
+          getSeenPRs(),
+          getMergedCelebrationAckAt(),
+        ]);
+        const hasUnseenMerged = seenPRs.some(
+          (record) => record.lastKnownState === "merged" && record.lastSeenAt > ackAt,
+        );
+        await updateBadge(snapshots, { showCelebration: hasUnseenMerged });
+        sendResponse({ success: true });
+      })();
+      return true;
     }
     return false;
   },

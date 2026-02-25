@@ -14,6 +14,12 @@
       <button id="settings-btn" class="icon-btn" title="Settings">&#x2699;</button>
     </div>
   </div>
+  <div class="header-meta">
+    <span class="sort-hint">Sorted by urgency</span>
+    <span id="refresh-interval" class="interval-hint"></span>
+  </div>
+  <div id="merge-celebration-bar" class="merge-celebration-bar" style="display:none"></div>
+  <div id="merged-history" class="merged-history" style="display:none"></div>
 
   <div id="no-config" class="empty-state" style="display:none">
     <p>No projects configured.</p>
@@ -24,6 +30,7 @@
   <div id="empty-list" class="empty-state" style="display:none">
     <p>No active pull requests.</p>
   </div>
+  <div id="action-toast" class="action-toast" aria-live="polite"></div>
 
   <script type="module" src="popup.js"></script>
 </body>

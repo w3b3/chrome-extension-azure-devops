@@ -6,6 +6,12 @@ interface FetchPRsOptions extends ApiClientOptions {
   userId: string;
 }
 
+interface FetchPRByIdOptions extends ApiClientOptions {
+  project: string;
+  repositoryName: string;
+  pullRequestId: number;
+}
+
 /** Fetch active PRs where the user is the creator */
 async function fetchCreatedPRs(options: FetchPRsOptions): Promise<GitPullRequest[]> {
   const path =
@@ -44,4 +50,12 @@ export async function fetchActivePRs(options: FetchPRsOptions): Promise<GitPullR
   }
 
   return result;
+}
+
+/** Fetch a specific PR by ID (used to verify post-disappearance state) */
+export async function fetchPRById(options: FetchPRByIdOptions): Promise<GitPullRequest> {
+  const path =
+    `${options.project}/_apis/git/repositories/${encodeURIComponent(options.repositoryName)}` +
+    `/pullRequests/${options.pullRequestId}`;
+  return apiGet<GitPullRequest>(options, path);
 }

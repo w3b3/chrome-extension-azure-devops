@@ -15,16 +15,30 @@ export function countAttentionNeeded(snapshots: PRSnapshot[]): number {
   }).length;
 }
 
-export async function updateBadge(snapshots: PRSnapshot[]): Promise<void> {
+interface UpdateBadgeOptions {
+  showCelebration: boolean;
+}
+
+export async function updateBadge(
+  snapshots: PRSnapshot[],
+  options: UpdateBadgeOptions = { showCelebration: false },
+): Promise<void> {
   const attention = countAttentionNeeded(snapshots);
   const total = snapshots.length;
 
-  if (total === 0) {
+  if (options.showCelebration) {
+    await chrome.action.setBadgeText({ text: "🎉" });
+    await chrome.action.setBadgeBackgroundColor({ color: "#16A34A" });
+    return;
+  }
+
+  if (attention === 0 && total === 0) {
     await chrome.action.setBadgeText({ text: "" });
     return;
   }
 
-  await chrome.action.setBadgeText({ text: String(total) });
+  const count = attention > 0 ? attention : total;
+  await chrome.action.setBadgeText({ text: String(count) });
 
   if (attention > 0) {
     await chrome.action.setBadgeBackgroundColor({ color: "#E53935" }); // red
