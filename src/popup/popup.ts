@@ -4,6 +4,35 @@ import { getSnapshots, getLastPollTimestamp } from "../utils/storage.js";
 import { prUrl } from "../utils/url-builder.js";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+type StepState = "failed" | "waiting" | "done" | "neutral";
+type TriageState = "blocked" | "waiting" | "ready" | "draft";
+
+interface VoteCounts {
+  approved: number;
+  rejected: number;
+  waiting: number;
+}
+
+interface CheckCounts {
+  failed: number;
+  pending: number;
+  passed: number;
+  total: number;
+}
+
+interface PipelineStep {
+  label: "Checks" | "Reviews" | "Mergeability";
+  state: StepState;
+  text: string;
+}
+
+interface PRViewModel {
+  triage: TriageState;
+  actionLine: string;
+  details: string[];
+  pipeline: PipelineStep[];
+  primaryActionLabel: string;
+}
 
 async function render(): Promise<void> {
   const settings = await getSettings();
@@ -62,25 +91,71 @@ function renderPRList(snapshots: PRSnapshot[]): void {
       if (url) void chrome.tabs.create({ url });
     });
   });
+
+  container.querySelectorAll(".pr-action-btn").forEach((el) => {
+    el.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const button = el as HTMLButtonElement;
+      const action = button.dataset["action"];
+      const actionUrl = button.dataset["url"];
+
+      if (action === "open" && actionUrl) {
+        void chrome.tabs.create({ url: actionUrl });
+      } else if (action === "refresh") {
+        void pollNow();
+      }
+    });
+  });
 }
 
 function renderPRItem(pr: PRSnapshot): string {
   const url = prUrl(pr.organization, pr.project, pr.repositoryName, pr.pullRequestId);
+  const model = toViewModel(pr);
   const statusClass = getStatusBarClass(pr);
-  const badges = getBadges(pr);
   const branch = shortenRef(pr.sourceRefName);
   const target = shortenRef(pr.targetRefName);
+  const triageLabel = model.triage === "ready" ? "Ready" : model.triage === "blocked" ? "Blocked" : model.triage === "draft" ? "Draft" : "Waiting";
+  const secondaryAction =
+    model.primaryActionLabel === "Open PR"
+      ? `<button class="pr-action-btn" data-action="refresh">Refresh status</button>`
+      : `<button class="pr-action-btn" data-action="open" data-url="${esc(url)}">Open PR</button>`;
 
   return `
     <div class="pr-item" data-url="${esc(url)}">
       <div class="pr-status-bar ${statusClass}"></div>
       <div class="pr-content">
-        <div class="pr-title" title="${esc(pr.title)}">${esc(pr.title)}</div>
+        <div class="pr-top">
+          <div class="pr-title" title="${esc(pr.title)}">${esc(pr.title)}</div>
+          <span class="triage-badge ${model.triage}">${triageLabel}</span>
+        </div>
         <div class="pr-meta">
           #${pr.pullRequestId} &middot; ${esc(pr.createdByName)} &middot; ${esc(branch)} &rarr; ${esc(target)}
         </div>
+        <div class="pr-action-line">${esc(model.actionLine)}</div>
+        <div class="pipeline">
+          <div class="pipeline-grid">
+            ${model.pipeline
+              .map(
+                (step) => `
+                  <div class="pipeline-step">
+                    <span class="pipeline-label">${step.label}</span>
+                    <span class="pipeline-pill ${step.state}">${esc(step.text)}</span>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        </div>
+        ${
+          model.details.length > 0
+            ? `<div class="pr-details">${model.details.map((detail) => `<div>&bull; ${esc(detail)}</div>`).join("")}</div>`
+            : ""
+        }
         <div class="pr-project">${esc(pr.organization)}/${esc(pr.project)}/${esc(pr.repositoryName)}</div>
-        ${badges.length > 0 ? `<div class="pr-badges">${badges.join("")}</div>` : ""}
+        <div class="pr-actions">
+          <button class="pr-action-btn primary" data-action="open" data-url="${esc(url)}">${esc(model.primaryActionLabel)}</button>
+          ${secondaryAction}
+        </div>
       </div>
     </div>
   `;
@@ -96,34 +171,124 @@ function getStatusBarClass(pr: PRSnapshot): string {
   return "pending";
 }
 
-function getBadges(pr: PRSnapshot): string[] {
-  const badges: string[] = [];
+function toViewModel(pr: PRSnapshot): PRViewModel {
+  const votes = getVoteCounts(pr);
+  const checks = getCheckCounts(pr);
+  const hasBlocker = checks.failed > 0 || votes.rejected > 0 || pr.mergeStatus === "conflicts";
 
-  if (pr.isDraft) badges.push(`<span class="badge draft">Draft</span>`);
-  if (pr.mergeStatus === "conflicts") badges.push(`<span class="badge conflict">Conflicts</span>`);
+  let triage: TriageState = "waiting";
+  let actionLine = "Waiting for updates";
 
-  // Reviewer votes
+  if (pr.isDraft) {
+    triage = "draft";
+    actionLine = "Draft PR is not ready for review";
+  } else if (hasBlocker) {
+    triage = "blocked";
+    actionLine = "Action needed: resolve blocking issues";
+  } else if (votes.waiting > 0 && pr.isAuthor) {
+    triage = "waiting";
+    actionLine = `Action needed: ${votes.waiting} reviewer${plural(votes.waiting)} waiting for author`;
+  } else if (checks.pending > 0) {
+    triage = "waiting";
+    actionLine = `Waiting on ${checks.pending} running check${plural(checks.pending)}`;
+  } else {
+    triage = "ready";
+    actionLine = "Ready to merge (no blockers detected)";
+  }
+
+  const details: string[] = [];
+  if (checks.failed > 0) details.push(`${checks.failed} required check${plural(checks.failed)} failed`);
+  if (votes.rejected > 0) details.push(`${votes.rejected} reviewer${plural(votes.rejected)} requested changes`);
+  if (votes.waiting > 0) {
+    details.push(
+      pr.isAuthor
+        ? `${votes.waiting} reviewer${plural(votes.waiting)} waiting for author`
+        : `${votes.waiting} reviewer${plural(votes.waiting)} waiting`,
+    );
+  }
+  if (pr.mergeStatus === "conflicts") details.push("Merge conflicts detected");
+
+  const pipeline: PipelineStep[] = [
+    toCheckStep(checks),
+    toReviewStep(votes, pr.isAuthor),
+    toMergeStep(pr),
+  ];
+
+  const primaryActionLabel =
+    checks.failed > 0
+      ? "View failed checks"
+      : votes.rejected > 0
+        ? "Open reviewer feedback"
+        : votes.waiting > 0 && pr.isAuthor
+          ? "Respond to reviewers"
+          : "Open PR";
+
+  return {
+    triage,
+    actionLine,
+    details: details.slice(0, 2),
+    pipeline,
+    primaryActionLabel,
+  };
+}
+
+function toCheckStep(checks: CheckCounts): PipelineStep {
+  if (checks.failed > 0) return { label: "Checks", state: "failed", text: "Failed" };
+  if (checks.pending > 0) return { label: "Checks", state: "waiting", text: "Running" };
+  if (checks.total > 0 && checks.passed === checks.total)
+    return { label: "Checks", state: "done", text: "Passed" };
+  return { label: "Checks", state: "neutral", text: "No checks" };
+}
+
+function toReviewStep(votes: VoteCounts, isAuthor: boolean): PipelineStep {
+  if (votes.rejected > 0) return { label: "Reviews", state: "failed", text: "Changes requested" };
+  if (votes.waiting > 0) {
+    return {
+      label: "Reviews",
+      state: "waiting",
+      text: isAuthor ? `${votes.waiting} waiting for author` : `${votes.waiting} waiting`,
+    };
+  }
+  if (votes.approved > 0) return { label: "Reviews", state: "done", text: "Approved" };
+  return { label: "Reviews", state: "neutral", text: "No votes" };
+}
+
+function toMergeStep(pr: PRSnapshot): PipelineStep {
+  if (pr.mergeStatus === "conflicts") return { label: "Mergeability", state: "failed", text: "Conflicts" };
+  if (pr.mergeStatus === "succeeded") return { label: "Mergeability", state: "done", text: "Clean" };
+  return { label: "Mergeability", state: "waiting", text: "Checking" };
+}
+
+function getVoteCounts(pr: PRSnapshot): VoteCounts {
   const votes = Object.values(pr.reviewerVotes);
-  const approved = votes.filter((v) => v === 10).length;
-  const rejected = votes.filter((v) => v === -10).length;
-  const waiting = votes.filter((v) => v === -5).length;
+  return {
+    approved: votes.filter((v) => v === 10).length,
+    rejected: votes.filter((v) => v === -10).length,
+    waiting: votes.filter((v) => v === -5).length,
+  };
+}
 
-  if (rejected > 0) badges.push(`<span class="badge rejected">${rejected} Rejected</span>`);
-  if (waiting > 0) badges.push(`<span class="badge waiting">${waiting} Waiting</span>`);
-  if (approved > 0) badges.push(`<span class="badge approved">${approved} Approved</span>`);
-
-  // Pipeline status
+function getCheckCounts(pr: PRSnapshot): CheckCounts {
   const checks = Object.values(pr.statusChecks);
-  const failed = checks.filter((s) => s === "failed" || s === "error").length;
-  const passed = checks.filter((s) => s === "succeeded").length;
-  const pending = checks.filter((s) => s === "pending").length;
+  return {
+    failed: checks.filter((s) => s === "failed" || s === "error").length,
+    pending: checks.filter((s) => s === "pending").length,
+    passed: checks.filter((s) => s === "succeeded").length,
+    total: checks.length,
+  };
+}
 
-  if (failed > 0) badges.push(`<span class="badge pipeline-fail">${failed} Failed</span>`);
-  if (pending > 0) badges.push(`<span class="badge pipeline-pending">${pending} Pending</span>`);
-  if (passed > 0 && failed === 0 && pending === 0)
-    badges.push(`<span class="badge pipeline-ok">Checks OK</span>`);
+function plural(count: number): string {
+  return count === 1 ? "" : "s";
+}
 
-  return badges;
+async function pollNow(): Promise<void> {
+  $("refresh-btn").classList.add("refreshing");
+  await new Promise<void>((resolve) => {
+    chrome.runtime.sendMessage({ type: "poll-now" }, () => resolve());
+  });
+  $("refresh-btn").classList.remove("refreshing");
+  await render();
 }
 
 function needsAttention(pr: PRSnapshot): boolean {
@@ -146,11 +311,7 @@ function esc(str: string): string {
 
 // Refresh button
 $<HTMLButtonElement>("refresh-btn").addEventListener("click", () => {
-  $("refresh-btn").classList.add("refreshing");
-  chrome.runtime.sendMessage({ type: "poll-now" }, () => {
-    $("refresh-btn").classList.remove("refreshing");
-    void render();
-  });
+  void pollNow();
 });
 
 // Settings button
