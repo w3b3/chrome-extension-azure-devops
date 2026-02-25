@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PR Monitor</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <h1>PR Monitor</h1>
+    <div class="header-actions">
+      <span id="last-updated" class="timestamp"></span>
+      <button id="refresh-btn" class="icon-btn" title="Refresh now">&#x21bb;</button>
+      <button id="settings-btn" class="icon-btn" title="Settings">&#x2699;</button>
+    </div>
+  </div>
+
+  <div id="no-config" class="empty-state" style="display:none">
+    <p>No projects configured.</p>
+    <button id="open-options" class="btn btn-primary">Open Settings</button>
+  </div>
+
+  <div id="pr-list"></div>
+  <div id="empty-list" class="empty-state" style="display:none">
+    <p>No active pull requests.</p>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

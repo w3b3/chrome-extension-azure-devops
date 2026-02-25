@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Azure DevOps PR Monitor — Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Azure DevOps PR Monitor</h1>
+    <p class="subtitle">Configure your Azure DevOps projects to monitor for PR activity.</p>
+
+    <section class="settings-section">
+      <h2>Projects</h2>
+      <div id="project-list"></div>
+
+      <div class="add-project-form">
+        <h3>Add Project</h3>
+        <div class="form-row">
+          <label for="org">Organization</label>
+          <input type="text" id="org" placeholder="myorg" />
+        </div>
+        <div class="form-row">
+          <label for="project">Project</label>
+          <input type="text" id="project" placeholder="MyProject" />
+        </div>
+        <div class="form-row">
+          <label for="pat">Personal Access Token</label>
+          <input type="password" id="pat" placeholder="Needs Code (read) scope" />
+        </div>
+        <button id="add-btn" class="btn btn-primary">Add &amp; Verify Connection</button>
+        <div id="add-status" class="status-msg"></div>
+      </div>
+    </section>
+
+    <section class="settings-section">
+      <h2>General</h2>
+      <div class="form-row">
+        <label for="poll-interval">Poll interval (minutes)</label>
+        <input type="number" id="poll-interval" min="1" max="60" value="2" />
+      </div>
+      <div class="form-row checkbox-row">
+        <input type="checkbox" id="notif-enabled" checked />
+        <label for="notif-enabled">Enable desktop notifications</label>
+      </div>
+      <button id="save-general-btn" class="btn">Save</button>
+      <div id="general-status" class="status-msg"></div>
+    </section>
+  </div>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>
