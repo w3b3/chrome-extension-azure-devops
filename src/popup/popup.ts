@@ -96,7 +96,7 @@ async function render(): Promise<void> {
 
   $("empty-list").style.display = "none";
   $("pr-list").style.display = "block";
-  renderPRList(snapshots, settings.projects);
+  renderPRList(snapshots, settings.projects, settings.jiraDomainDefault);
 }
 
 function renderTimestamp(ts: number): void {
@@ -208,7 +208,11 @@ async function refreshBadgeIcon(): Promise<void> {
   });
 }
 
-function renderPRList(snapshots: PRSnapshot[], projects: ProjectConfig[]): void {
+function renderPRList(
+  snapshots: PRSnapshot[],
+  projects: ProjectConfig[],
+  jiraDomainDefault?: string,
+): void {
   const container = $("pr-list");
   const projectJiraDomains = new Map<string, string>();
   for (const project of projects) {
@@ -224,7 +228,7 @@ function renderPRList(snapshots: PRSnapshot[], projects: ProjectConfig[]): void 
     return new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime();
   });
 
-  container.innerHTML = sorted.map((pr) => renderPRItem(pr, projectJiraDomains)).join("");
+  container.innerHTML = sorted.map((pr) => renderPRItem(pr, projectJiraDomains, jiraDomainDefault)).join("");
 
   container.querySelectorAll(".pr-card").forEach((el) => {
     el.addEventListener("click", () => {
@@ -269,10 +273,14 @@ function renderPRList(snapshots: PRSnapshot[], projects: ProjectConfig[]): void 
   });
 }
 
-function renderPRItem(pr: PRSnapshot, projectJiraDomains: Map<string, string>): string {
+function renderPRItem(
+  pr: PRSnapshot,
+  projectJiraDomains: Map<string, string>,
+  jiraDomainDefault?: string,
+): string {
   const url = prUrl(pr.organization, pr.project, pr.repositoryName, pr.pullRequestId);
   const model = toViewModel(pr);
-  const jiraReminder = getJiraReminder(pr, projectJiraDomains);
+  const jiraReminder = getJiraReminder(pr, projectJiraDomains, jiraDomainDefault);
   const branch = shortenRef(pr.sourceRefName);
   const target = shortenRef(pr.targetRefName);
   const triageLabel = model.triage === "ready" ? "Ready" : model.triage === "blocked" ? "Blocked" : model.triage === "draft" ? "Draft" : "Waiting";
@@ -341,11 +349,17 @@ function renderPRItem(pr: PRSnapshot, projectJiraDomains: Map<string, string>): 
   `;
 }
 
-function getJiraReminder(pr: PRSnapshot, projectJiraDomains: Map<string, string>): { ticketKey: string; url?: string } | null {
+function getJiraReminder(
+  pr: PRSnapshot,
+  projectJiraDomains: Map<string, string>,
+  jiraDomainDefault?: string,
+): { ticketKey: string; url?: string } | null {
   const ticketKey = extractJiraTicketKey(pr.title);
   if (!ticketKey) return null;
 
-  const jiraDomain = projectJiraDomains.get(buildProjectKey(pr.organization, pr.project));
+  const jiraDomain =
+    projectJiraDomains.get(buildProjectKey(pr.organization, pr.project)) ??
+    jiraDomainDefault;
   if (!jiraDomain) {
     return { ticketKey };
   }

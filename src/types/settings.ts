@@ -17,6 +17,8 @@ export interface ProjectConfig {
 export interface ExtensionSettings {
   /** Configured Azure DevOps projects to monitor */
   projects: ProjectConfig[];
+  /** Global Jira domain prefix fallback (e.g. "arancia" for arancia.atlassian.net) */
+  jiraDomainDefault?: string;
   /** Polling interval in minutes (default: 2) */
   pollIntervalMinutes: number;
   /** Whether desktop notifications are enabled (default: true) */

@@ -8,6 +8,9 @@ async function render(): Promise<void> {
   const settings = await getSettings();
   renderProjectList(settings.projects);
 
+  const jiraDomainDefaultInput = $<HTMLInputElement>("jira-domain-default");
+  jiraDomainDefaultInput.value = settings.jiraDomainDefault ?? "";
+
   const pollInput = $<HTMLInputElement>("poll-interval");
   pollInput.value = String(settings.pollIntervalMinutes);
 
@@ -116,12 +119,14 @@ async function addProject(): Promise<void> {
 async function saveGeneral(): Promise<void> {
   const statusEl = $<HTMLDivElement>("general-status");
   const settings = await getSettings();
+  const jiraDomainDefault = normalizeJiraDomain($<HTMLInputElement>("jira-domain-default").value);
 
   settings.pollIntervalMinutes = Math.max(
     1,
     parseInt($<HTMLInputElement>("poll-interval").value, 10) || 2,
   );
   settings.notificationsEnabled = $<HTMLInputElement>("notif-enabled").checked;
+  settings.jiraDomainDefault = jiraDomainDefault || undefined;
 
   await saveSettings(settings);
   showStatus(statusEl, "Settings saved.", "success");
