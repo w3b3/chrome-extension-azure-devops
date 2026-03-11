@@ -121,17 +121,77 @@ body {
 
 /* ── Add project form ── */
 
-.add-project-form {
+.add-project-panel {
   margin-top: 1.25rem;
   padding-top: 1.25rem;
   border-top: 1px solid var(--border-light);
 }
 
-.add-project-form h3 {
+.add-project-toggle {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--ink-2);
-  margin-bottom: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.add-project-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.add-project-toggle::before {
+  content: "▸";
+  color: var(--ink-3);
+  margin-right: 0.35rem;
+  transition: transform 0.15s ease;
+  display: inline-block;
+}
+
+.add-project-panel[open] .add-project-toggle::before {
+  transform: rotate(90deg);
+}
+
+.add-project-form {
+  margin-top: 0.75rem;
+}
+
+.general-toggle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.general-toggle svg {
+  color: var(--coral);
+  flex-shrink: 0;
+}
+
+.general-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.general-toggle::after {
+  content: "▸";
+  color: var(--ink-3);
+  margin-left: auto;
+  transition: transform 0.15s ease;
+}
+
+.general-panel[open] .general-toggle::after {
+  transform: rotate(90deg);
+}
+
+.general-content {
+  padding-top: 1rem;
 }
 
 /* ── Form rows ── */
@@ -263,49 +323,95 @@ body {
 
 /* ── Project cards ── */
 
-.project-card {
+.org-group {
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 0.85rem 1rem;
+  padding: 0.85rem 1rem 0.7rem;
   margin-bottom: 0.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   background: var(--surface);
   transition: border-color 0.12s;
 }
 
-.project-card:hover {
+.org-group:hover {
   border-color: #ccc8bf;
 }
 
-.project-card .project-info {
-  font-size: 0.85rem;
-  min-width: 0;
+.org-header {
+  margin-bottom: 0.55rem;
 }
 
-.project-card .project-info .org-project {
+.org-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.org-title {
   font-weight: 700;
   color: var(--ink);
   font-size: 0.9rem;
 }
 
-.project-card .project-info .user-name {
+.org-count {
+  font-size: 0.75rem;
+  color: var(--ink-3);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.org-user {
   color: var(--ink-3);
   font-size: 0.8rem;
   font-weight: 500;
   margin-top: 2px;
 }
 
-.project-card .project-info .jira-domain {
+.org-jira {
   color: var(--sienna);
   font-size: 0.8rem;
   font-weight: 500;
   margin-top: 1px;
 }
 
-.project-card .project-info .jira-domain.muted {
+.org-jira.muted {
   color: var(--ink-4);
+}
+
+.project-rows {
+  border-top: 1px solid var(--border-light);
+}
+
+.project-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.project-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0.3rem;
+}
+
+.project-main {
+  min-width: 0;
+}
+
+.project-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.project-badge {
+  margin-top: 0.15rem;
+  color: var(--sienna);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .no-projects {

@@ -6,7 +6,7 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 
 async function render(): Promise<void> {
   const settings = await getSettings();
-  renderProjectList(settings.projects);
+  renderProjectList(settings.projects, settings.jiraDomainDefault);
 
   const jiraDomainDefaultInput = $<HTMLInputElement>("jira-domain-default");
   jiraDomainDefaultInput.value = settings.jiraDomainDefault ?? "";
@@ -18,7 +18,7 @@ async function render(): Promise<void> {
   notifCheckbox.checked = settings.notificationsEnabled;
 }
 
-function renderProjectList(projects: ProjectConfig[]): void {
+function renderProjectList(projects: ProjectConfig[], jiraDomainDefault?: string): void {
   const container = $<HTMLDivElement>("project-list");
 
   if (projects.length === 0) {
@@ -26,23 +26,78 @@ function renderProjectList(projects: ProjectConfig[]): void {
     return;
   }
 
-  container.innerHTML = projects
-    .map(
-      (p, i) => `
-    <div class="project-card">
-      <div class="project-info">
-        <div class="org-project">${esc(p.organization)} / ${esc(p.project)}</div>
-        <div class="user-name">${p.userDisplayName ? `Connected as ${esc(p.userDisplayName)}` : "Not connected"}</div>
-        ${
-          p.jiraDomain
-            ? `<div class="jira-domain">Jira: ${esc(`${p.jiraDomain}.atlassian.net`)}</div>`
-            : `<div class="jira-domain muted">Jira domain not configured</div>`
-        }
-      </div>
-      <button class="btn btn-danger remove-btn" data-index="${i}">Remove</button>
-    </div>
-  `,
-    )
+  const grouped = new Map<string, Array<{ project: ProjectConfig; index: number }>>();
+  projects.forEach((project, index) => {
+    const bucket = grouped.get(project.organization) ?? [];
+    bucket.push({ project, index });
+    grouped.set(project.organization, bucket);
+  });
+
+  const organizations = [...grouped.entries()].sort(([a], [b]) => a.localeCompare(b));
+
+  container.innerHTML = organizations
+    .map(([organization, entries]) => {
+      const orgEntries = [...entries].sort((a, b) => a.project.project.localeCompare(b.project.project));
+      const userNames = [
+        ...new Set(orgEntries.map((e) => e.project.userDisplayName).filter((name): name is string => Boolean(name))),
+      ];
+      const effectiveDomains = [
+        ...new Set(orgEntries.map((e) => e.project.jiraDomain ?? jiraDomainDefault).filter(Boolean)),
+      ];
+      const usesGlobalFallbackForAll =
+        Boolean(jiraDomainDefault) && orgEntries.every((entry) => !entry.project.jiraDomain);
+
+      const userSummary = userNames.length === 1
+        ? `Connected as ${esc(userNames[0])}`
+        : userNames.length > 1
+          ? "Connected as multiple accounts"
+          : "Not connected";
+
+      const jiraSummary = effectiveDomains.length === 0
+        ? `<div class="org-jira muted">Jira domain not configured</div>`
+        : `<div class="org-jira">Jira: ${esc(`${effectiveDomains[0]}.atlassian.net`)}${usesGlobalFallbackForAll ? " (global fallback)" : ""}</div>`;
+
+      return `
+        <div class="org-group">
+          <div class="org-header">
+            <div class="org-title-row">
+              <div class="org-title">${esc(organization)}</div>
+              <div class="org-count">${orgEntries.length} project${orgEntries.length === 1 ? "" : "s"}</div>
+            </div>
+            <div class="org-user">${userSummary}</div>
+            ${
+              effectiveDomains.length > 1
+                ? `<div class="org-jira">Jira: multiple domains configured</div>`
+                : jiraSummary
+            }
+          </div>
+          <div class="project-rows">
+            ${orgEntries
+              .map(({ project, index }) => {
+                const overrideDomain = project.jiraDomain;
+                const hasOverride = Boolean(overrideDomain) && overrideDomain !== jiraDomainDefault;
+                const hasProjectDomainWithoutFallback = Boolean(overrideDomain) && !jiraDomainDefault;
+                return `
+                  <div class="project-row">
+                    <div class="project-main">
+                      <div class="project-name">${esc(project.project)}</div>
+                      ${
+                        hasOverride
+                          ? `<div class="project-badge">Jira override: ${esc(`${overrideDomain}.atlassian.net`)}</div>`
+                          : hasProjectDomainWithoutFallback
+                            ? `<div class="project-badge">Jira: ${esc(`${overrideDomain}.atlassian.net`)}</div>`
+                            : ""
+                      }
+                    </div>
+                    <button class="btn btn-danger remove-btn" data-index="${index}">Remove</button>
+                  </div>
+                `;
+              })
+              .join("")}
+          </div>
+        </div>
+      `;
+    })
     .join("");
 
   container.querySelectorAll(".remove-btn").forEach((btn) => {
@@ -57,7 +112,7 @@ async function removeProject(index: number): Promise<void> {
   const settings = await getSettings();
   settings.projects.splice(index, 1);
   await saveSettings(settings);
-  renderProjectList(settings.projects);
+  renderProjectList(settings.projects, settings.jiraDomainDefault);
 }
 
 async function addProject(): Promise<void> {
@@ -109,7 +164,7 @@ async function addProject(): Promise<void> {
     patInput.value = "";
     jiraDomainInput.value = "";
     showStatus(statusEl, `Connected as ${user.displayName}`, "success");
-    renderProjectList(settings.projects);
+    renderProjectList(settings.projects, settings.jiraDomainDefault);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Connection failed";
     showStatus(statusEl, msg, "error");
@@ -130,6 +185,7 @@ async function saveGeneral(): Promise<void> {
 
   await saveSettings(settings);
   showStatus(statusEl, "Settings saved.", "success");
+  renderProjectList(settings.projects, settings.jiraDomainDefault);
 }
 
 function showStatus(el: HTMLElement, msg: string, type: string): void {
