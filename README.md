@@ -33,6 +33,24 @@ A Chrome extension that monitors your Azure DevOps pull requests and delivers de
    - Enable **Developer mode** (toggle in top-right)
    - Click **Load unpacked** and select the `dist` folder
 
+## Packaging for Chrome Web Store
+
+```bash
+# Build and package for upload
+npm run package
+```
+
+This command creates:
+
+- `EXTENSION_BUILD/` — a clean copy of the built extension files from `dist/`
+- `extension-upload.zip` — ready to upload in the Chrome Web Store dashboard
+
+If you already built and only want to regenerate packaging artifacts:
+
+```bash
+npm run zip
+```
+
 ## Configuration
 
 1. Click the extension icon and open **Settings** (or right-click → Options)
