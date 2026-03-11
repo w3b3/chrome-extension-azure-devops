@@ -1,0 +1,36 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 512 512"
+  width="512"
+  height="512"
+  role="img"
+  aria-labelledby="logo-min-title logo-min-desc"
+>
+  <title id="logo-min-title">Azure DevOps Extension Logo Minimal Variant</title>
+  <desc id="logo-min-desc">Minimal circular mark with a simple stylized A and four compact pipeline nodes.</desc>
+
+  <defs>
+    <linearGradient id="minimalRing" x1="104" y1="256" x2="408" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#0EA5E9" />
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="#FFFFFF" />
+
+  <circle cx="256" cy="256" r="152" fill="none" stroke="url(#minimalRing)" stroke-width="24" />
+  <circle cx="256" cy="256" r="112" fill="#0F172A" />
+
+  <g fill="#38BDF8">
+    <circle cx="168" cy="204" r="10" />
+    <circle cx="344" cy="204" r="10" />
+    <circle cx="192" cy="316" r="10" />
+    <circle cx="320" cy="316" r="10" />
+  </g>
+
+  <path
+    fill="#F8FAFC"
+    d="M256 196L212 320H235L245 292H267L277 320H300L256 196ZM252 274L256 262L260 274H252Z"
+  />
+  <rect x="238" y="286" width="36" height="10" rx="5" fill="#F8FAFC" />
+</svg>

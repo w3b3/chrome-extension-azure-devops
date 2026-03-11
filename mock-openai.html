@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PR Monitor - Claude Themed Mock</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ["Sora", "sans-serif"],
+              body: ["Manrope", "sans-serif"],
+              mono: ["IBM Plex Mono", "monospace"]
+            },
+            colors: {
+              cl: {
+                bg: "#faf9f5",
+                core: "#141413",
+                coral: "#d97757",
+                blue: "#6a9bcc",
+                peach: "#f0b89a",
+                olive: "#788c5d",
+                stone: "#b0aea5",
+                link: "#a85a3a"
+              }
+            },
+            boxShadow: {
+              panel: "0 16px 38px rgba(20, 20, 19, 0.18)",
+              card: "0 1px 2px rgba(20, 20, 19, 0.05), 0 10px 20px rgba(20, 20, 19, 0.08)"
+            },
+            animation: {
+              "fade-up": "fadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both",
+              breathe: "breathe 2.6s ease-in-out infinite"
+            },
+            keyframes: {
+              fadeUp: {
+                "0%": { opacity: "0", transform: "translateY(8px)" },
+                "100%": { opacity: "1", transform: "translateY(0)" }
+              },
+              breathe: {
+                "0%, 100%": { transform: "scale(1)", opacity: "1" },
+                "50%": { transform: "scale(1.08)", opacity: "0.75" }
+              }
+            }
+          }
+        }
+      };
+    </script>
+    <style>
+      body {
+        width: 400px;
+        height: 600px;
+        margin: 0;
+        overflow: hidden;
+        font-family: "Manrope", sans-serif;
+        color: #1f242d;
+        background:
+          radial-gradient(circle at 8% 10%, rgba(217, 119, 87, 0.2), transparent 34%),
+          radial-gradient(circle at 92% 92%, rgba(106, 155, 204, 0.2), transparent 34%),
+          #faf9f5;
+        position: relative;
+      }
+
+      body::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.05;
+        background-image:
+          radial-gradient(#141413 0.4px, transparent 0.4px),
+          radial-gradient(#141413 0.4px, transparent 0.4px);
+        background-size: 18px 18px;
+        background-position:
+          0 0,
+          9px 9px;
+      }
+
+      .cl-panel {
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(176, 174, 165, 0.42);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+
+      .delay-1 {
+        animation-delay: 50ms;
+      }
+      .delay-2 {
+        animation-delay: 140ms;
+      }
+      .delay-3 {
+        animation-delay: 230ms;
+      }
+    </style>
+  </head>
+  <body class="antialiased">
+    <main class="relative z-10 flex h-full flex-col">
+      <header class="cl-panel border-b border-cl-stone/40 px-4 py-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="relative grid h-8 w-8 place-items-center rounded-lg border border-cl-stone/45 bg-cl-bg shadow-sm">
+              <i data-lucide="git-pull-request" class="h-4 w-4 text-cl-coral"></i>
+              <span class="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-cl-blue animate-breathe"></span>
+            </div>
+            <div>
+              <h1 class="font-display text-[15px] font-semibold tracking-tight text-cl-core">PR Monitor</h1>
+              <p class="font-mono text-[10px] uppercase tracking-[0.08em] text-[#7c786d]">sync 1m ago</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <button class="grid h-8 w-8 place-items-center rounded-md text-[#7b7369] transition hover:bg-cl-coral/10 hover:text-cl-core" title="Refresh">
+              <i data-lucide="refresh-cw" class="h-4 w-4"></i>
+            </button>
+            <button class="grid h-8 w-8 place-items-center rounded-md text-[#7b7369] transition hover:bg-cl-blue/10 hover:text-cl-core" title="Settings">
+              <i data-lucide="settings-2" class="h-4 w-4"></i>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="cl-panel border-b border-cl-stone/35 px-4 py-2 text-[11px] text-[#6f6a5f]">
+        <div class="flex items-center justify-between">
+          <span class="inline-flex items-center gap-1.5">
+            <span class="h-1.5 w-1.5 rounded-full bg-cl-olive"></span>
+            Sorted by urgency
+          </span>
+          <span class="font-mono text-[10px] uppercase">auto 2m</span>
+        </div>
+      </div>
+
+      <section class="flex-1 space-y-4 overflow-y-auto p-4">
+        <article class="cl-panel animate-fade-up delay-1 overflow-hidden rounded-xl shadow-card">
+          <div class="h-[2px] bg-gradient-to-r from-cl-coral via-cl-peach to-cl-blue"></div>
+          <div class="space-y-4 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <h2 class="font-display text-[17px] font-semibold leading-tight text-cl-core">
+                fix(DS-4035): add status filter to sigma rules
+              </h2>
+              <span class="shrink-0 rounded border border-cl-olive/45 bg-cl-olive/10 px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-cl-olive">
+                Ready
+              </span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] text-[#766f64]">
+              <span class="inline-flex items-center gap-1">
+                <i data-lucide="hash" class="h-3 w-3"></i>
+                <span class="font-mono text-[#4d473e]">6561</span>
+              </span>
+              <span class="h-1 w-1 rounded-full bg-cl-stone"></span>
+              <span class="inline-flex items-center gap-1.5">
+                <span class="grid h-4 w-4 place-items-center rounded-full bg-gradient-to-br from-cl-coral to-cl-blue text-[8px] font-bold text-white">DS</span>
+                <span class="text-[#4d473e]">Daniel Santos</span>
+              </span>
+            </div>
+
+            <div class="inline-flex items-center gap-2 rounded-lg border border-cl-stone/45 bg-white/60 px-2.5 py-2 font-mono text-[10px] text-[#5d584f]">
+              <i data-lucide="git-branch" class="h-3.5 w-3.5 text-cl-link"></i>
+              <span>fix/DS-4035</span>
+              <i data-lucide="arrow-right" class="h-3 w-3 text-cl-stone"></i>
+              <span class="text-cl-blue">main</span>
+            </div>
+
+            <aside class="relative overflow-hidden rounded-lg border border-cl-coral/40 bg-cl-peach/35 p-3">
+              <div class="absolute inset-y-0 left-0 w-1 bg-cl-coral/85"></div>
+              <div class="ml-2 flex items-start gap-2.5">
+                <i data-lucide="triangle-alert" class="mt-0.5 h-4 w-4 shrink-0 text-cl-link"></i>
+                <div>
+                  <p class="font-mono text-[9px] uppercase tracking-[0.11em] text-cl-link">Jira action required</p>
+                  <p class="mt-1 text-[12px] leading-4 text-[#4f483f]">
+                    Update DS-4035 status.
+                    <span class="text-[#6d655a]">Configure Jira domain in settings for quick links.</span>
+                  </p>
+                </div>
+              </div>
+            </aside>
+
+            <div class="space-y-2">
+              <p class="inline-flex items-center gap-2 text-sm font-medium text-cl-core">
+                <span class="relative flex h-2 w-2">
+                  <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-cl-olive opacity-65"></span>
+                  <span class="relative inline-flex h-2 w-2 rounded-full bg-cl-olive"></span>
+                </span>
+                Ready to merge
+              </p>
+
+              <div class="grid grid-cols-3 gap-2">
+                <div class="rounded-lg border border-cl-stone/45 bg-white/60 p-2">
+                  <p class="font-mono text-[9px] uppercase tracking-[0.1em] text-[#8a8478]">Checks</p>
+                  <p class="mt-1 inline-flex items-center gap-1 text-xs font-medium text-cl-olive">
+                    <i data-lucide="check-circle-2" class="h-3.5 w-3.5"></i>
+                    Passed
+                  </p>
+                </div>
+                <div class="rounded-lg border border-cl-stone/45 bg-white/60 p-2">
+                  <p class="font-mono text-[9px] uppercase tracking-[0.1em] text-[#8a8478]">Reviews</p>
+                  <p class="mt-1 inline-flex items-center gap-1 text-xs font-medium text-[#6f6a5f]">
+                    <i data-lucide="minus" class="h-3.5 w-3.5"></i>
+                    None
+                  </p>
+                </div>
+                <div class="rounded-lg border border-cl-stone/45 bg-white/60 p-2">
+                  <p class="font-mono text-[9px] uppercase tracking-[0.1em] text-[#8a8478]">Merge</p>
+                  <p class="mt-1 inline-flex items-center gap-1 text-xs font-medium text-cl-blue">
+                    <i data-lucide="git-merge" class="h-3.5 w-3.5"></i>
+                    Clean
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <p class="text-[11px] text-[#8b8478]">ZestSecurity/backend/sight-http</p>
+
+            <div class="flex items-center gap-2">
+              <button class="flex-1 rounded-lg bg-gradient-to-r from-cl-coral to-cl-link px-3 py-2.5 text-sm font-semibold text-white transition hover:brightness-95">
+                Open PR
+              </button>
+              <button
+                class="grid h-10 w-10 place-items-center rounded-lg border border-cl-stone/50 bg-white/65 text-[#5c554a] transition hover:bg-cl-blue/10 hover:text-cl-blue"
+                title="Refresh status"
+              >
+                <i data-lucide="refresh-cw" class="h-4 w-4"></i>
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <section class="animate-fade-up delay-2">
+          <div class="mb-2 flex items-center justify-between px-1">
+            <h3 class="font-display text-sm font-medium text-[#575146]">Recently merged</h3>
+            <span class="rounded-full border border-cl-stone/50 bg-white/70 px-2 py-0.5 font-mono text-[10px] text-[#7b7369]">last 24h</span>
+          </div>
+          <div class="space-y-2">
+            <article class="cl-panel animate-fade-up delay-2 cursor-pointer rounded-lg p-3 shadow-card transition hover:border-cl-coral/40 hover:bg-cl-peach/20">
+              <div class="flex items-start gap-3">
+                <div class="mt-0.5 rounded bg-cl-olive/15 p-1.5 text-cl-olive">
+                  <i data-lucide="git-merge" class="h-3.5 w-3.5"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium text-[#312d27]">fix(DS-4027): enhance PPL validator error handling</p>
+                  <p class="mt-1 font-mono text-[11px] text-[#8a8478]">#6556 • 2h ago</p>
+                </div>
+              </div>
+            </article>
+            <article class="cl-panel animate-fade-up delay-3 cursor-pointer rounded-lg p-3 shadow-card transition hover:border-cl-blue/40 hover:bg-cl-blue/10">
+              <div class="flex items-start gap-3">
+                <div class="mt-0.5 rounded bg-cl-blue/15 p-1.5 text-cl-blue">
+                  <i data-lucide="git-merge" class="h-3.5 w-3.5"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium text-[#312d27]">feat(DS-3950): add internal API for service-to-service</p>
+                  <p class="mt-1 font-mono text-[11px] text-[#8a8478]">#6389 • 6h ago</p>
+                </div>
+              </div>
+            </article>
+            <article class="cl-panel cursor-pointer rounded-lg p-3 shadow-card transition hover:border-cl-stone hover:bg-white/85">
+              <div class="flex items-start gap-3">
+                <div class="mt-0.5 rounded bg-cl-stone/20 p-1.5 text-[#6a655b]">
+                  <i data-lucide="git-merge" class="h-3.5 w-3.5"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium text-[#312d27]">refactor(DS-3952): replace direct PostgreSQL access</p>
+                  <p class="mt-1 font-mono text-[11px] text-[#8a8478]">#6391 • 6h ago</p>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
