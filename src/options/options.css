@@ -119,6 +119,44 @@ body {
   flex-shrink: 0;
 }
 
+.projects-toggle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.projects-toggle svg {
+  color: var(--coral);
+  flex-shrink: 0;
+}
+
+.projects-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.projects-toggle::after {
+  content: "▸";
+  color: var(--ink-3);
+  margin-left: auto;
+  transition: transform 0.15s ease;
+}
+
+.projects-panel[open] .projects-toggle::after {
+  transform: rotate(90deg);
+}
+
+.projects-content {
+  padding-top: 1rem;
+}
+
 /* ── Add project form ── */
 
 .add-project-panel {
@@ -154,6 +192,14 @@ body {
 
 .add-project-form {
   margin-top: 0.75rem;
+}
+
+.projects-toggle:focus-visible,
+.add-project-toggle:focus-visible,
+.general-toggle:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 .general-toggle {
@@ -370,6 +416,13 @@ body {
 .org-jira {
   color: var(--sienna);
   font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.org-jira-hint {
+  color: var(--ink-3);
+  font-size: 0.75rem;
   font-weight: 500;
   margin-top: 1px;
 }

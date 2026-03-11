@@ -55,7 +55,7 @@ function renderProjectList(projects: ProjectConfig[], jiraDomainDefault?: string
 
       const jiraSummary = effectiveDomains.length === 0
         ? `<div class="org-jira muted">Jira domain not configured</div>`
-        : `<div class="org-jira">Jira: ${esc(`${effectiveDomains[0]}.atlassian.net`)}${usesGlobalFallbackForAll ? " (global fallback)" : ""}</div>`;
+        : `<div class="org-jira">Jira: ${esc(`${effectiveDomains[0]}.atlassian.net`)}${usesGlobalFallbackForAll ? " (using global)" : ""}</div>`;
 
       return `
         <div class="org-group">
@@ -67,7 +67,7 @@ function renderProjectList(projects: ProjectConfig[], jiraDomainDefault?: string
             <div class="org-user">${userSummary}</div>
             ${
               effectiveDomains.length > 1
-                ? `<div class="org-jira">Jira: multiple domains configured</div>`
+                ? `<div class="org-jira">Jira: multiple domains configured</div><div class="org-jira-hint">Some projects use Jira overrides.</div>`
                 : jiraSummary
             }
           </div>
@@ -83,7 +83,7 @@ function renderProjectList(projects: ProjectConfig[], jiraDomainDefault?: string
                       <div class="project-name">${esc(project.project)}</div>
                       ${
                         hasOverride
-                          ? `<div class="project-badge">Jira override: ${esc(`${overrideDomain}.atlassian.net`)}</div>`
+                          ? `<div class="project-badge" title="This project overrides the global Jira domain.">Jira override: ${esc(`${overrideDomain}.atlassian.net`)}</div>`
                           : hasProjectDomainWithoutFallback
                             ? `<div class="project-badge">Jira: ${esc(`${overrideDomain}.atlassian.net`)}</div>`
                             : ""
@@ -110,6 +110,14 @@ function renderProjectList(projects: ProjectConfig[], jiraDomainDefault?: string
 
 async function removeProject(index: number): Promise<void> {
   const settings = await getSettings();
+  const projectToRemove = settings.projects[index];
+  if (!projectToRemove) return;
+
+  const shouldRemove = window.confirm(
+    `Remove ${projectToRemove.project} from ${projectToRemove.organization}?`,
+  );
+  if (!shouldRemove) return;
+
   settings.projects.splice(index, 1);
   await saveSettings(settings);
   renderProjectList(settings.projects, settings.jiraDomainDefault);

@@ -60,33 +60,37 @@
 
   <div class="container">
     <section class="settings-section">
-      <h2>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        Projects
-      </h2>
-      <div id="project-list"></div>
+      <details class="projects-panel" open>
+        <summary class="projects-toggle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          Projects
+        </summary>
+        <div class="projects-content">
+          <div id="project-list"></div>
 
-      <details class="add-project-panel">
-        <summary class="add-project-toggle">Add Project</summary>
-        <div class="add-project-form">
-          <div class="form-row">
-            <label for="org">Organization</label>
-            <input type="text" id="org" placeholder="myorg" />
-          </div>
-          <div class="form-row">
-            <label for="project">Project</label>
-            <input type="text" id="project" placeholder="MyProject" />
-          </div>
-          <div class="form-row">
-            <label for="pat">Personal Access Token</label>
-            <input type="password" id="pat" placeholder="Needs Code (read) scope" />
-          </div>
-          <div class="form-row">
-            <label for="jira-domain">Jira Domain (optional)</label>
-            <input type="text" id="jira-domain" placeholder="arancia or arancia.atlassian.net" />
-          </div>
-          <button id="add-btn" class="btn btn-primary">Add &amp; Verify Connection</button>
-          <div id="add-status" class="status-msg"></div>
+          <details class="add-project-panel">
+            <summary class="add-project-toggle">Add Project</summary>
+            <div class="add-project-form">
+              <div class="form-row">
+                <label for="org">Organization</label>
+                <input type="text" id="org" placeholder="myorg" />
+              </div>
+              <div class="form-row">
+                <label for="project">Project</label>
+                <input type="text" id="project" placeholder="MyProject" />
+              </div>
+              <div class="form-row">
+                <label for="pat">Personal Access Token</label>
+                <input type="password" id="pat" placeholder="Needs Code (read) scope" />
+              </div>
+              <div class="form-row">
+                <label for="jira-domain">Jira Domain (optional)</label>
+                <input type="text" id="jira-domain" placeholder="arancia or arancia.atlassian.net" />
+              </div>
+              <button id="add-btn" class="btn btn-primary">Add &amp; Verify Connection</button>
+              <div id="add-status" class="status-msg"></div>
+            </div>
+          </details>
         </div>
       </details>
     </section>
