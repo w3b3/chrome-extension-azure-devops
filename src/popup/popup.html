@@ -7,11 +7,47 @@
 </head>
 <body>
   <div class="header">
-    <h1>PR Monitor</h1>
+    <div class="brand">
+      <div class="brand-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="PR Monitor logo">
+          <defs>
+            <linearGradient id="clRingGrad" x1="72" y1="256" x2="440" y2="256" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#d97757"/><stop offset="100%" stop-color="#6a9bcc"/>
+            </linearGradient>
+            <linearGradient id="clCoreGrad" x1="256" y1="136" x2="256" y2="376" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#141413"/><stop offset="100%" stop-color="#2a2a28"/>
+            </linearGradient>
+            <linearGradient id="clAccentGrad" x1="256" y1="184" x2="256" y2="340" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#e8956e"/><stop offset="100%" stop-color="#d97757"/>
+            </linearGradient>
+          </defs>
+          <rect width="512" height="512" rx="80" fill="#faf9f5"/>
+          <circle cx="256" cy="256" r="184" fill="none" stroke="url(#clRingGrad)" stroke-width="40"/>
+          <g stroke="#a85a3a" stroke-width="12" stroke-linecap="round" opacity="0.85">
+            <line x1="150" y1="184" x2="212" y2="224"/><line x1="362" y1="184" x2="300" y2="224"/>
+            <line x1="196" y1="326" x2="316" y2="326"/>
+          </g>
+          <g>
+            <circle cx="138" cy="176" r="18" fill="#d97757"/><circle cx="374" cy="176" r="18" fill="#6a9bcc"/>
+            <circle cx="184" cy="326" r="18" fill="#788c5d"/><circle cx="328" cy="326" r="18" fill="#b0aea5"/>
+          </g>
+          <circle cx="256" cy="256" r="122" fill="url(#clCoreGrad)"/>
+          <g fill="url(#clAccentGrad)">
+            <path d="M256 184L196 340H228L241 304H271L284 340H316L256 184ZM249 281L256 259L263 281H249Z"/>
+            <rect x="236" y="296" width="40" height="12" rx="6"/>
+          </g>
+        </svg>
+      </div>
+      <h1>PR Monitor</h1>
+    </div>
     <div class="header-actions">
       <span id="last-updated" class="timestamp"></span>
-      <button id="refresh-btn" class="icon-btn" title="Refresh now">&#x21bb;</button>
-      <button id="settings-btn" class="icon-btn" title="Settings">&#x2699;</button>
+      <button id="refresh-btn" class="icon-btn" title="Refresh now">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+      <button id="settings-btn" class="icon-btn" title="Settings">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
     </div>
   </div>
   <div class="header-meta">

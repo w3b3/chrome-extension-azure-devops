@@ -1,4 +1,5 @@
 import type { PRSnapshot, SeenPRRecord } from "../types/state.js";
+import type { ProjectConfig } from "../types/settings.js";
 import { getSettings } from "../utils/storage.js";
 import {
   getSnapshots,
@@ -46,6 +47,26 @@ interface PRViewModel {
 let toastTimer: number | undefined;
 const RECENT_MERGED_WINDOW_MS = 24 * 60 * 60 * 1000;
 const MAX_RECENT_MERGED_ITEMS = 3;
+const JIRA_KEY_RE = /\b([A-Z][A-Z0-9]+-\d+)\b/;
+
+const SVG_CHECK = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const SVG_X = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+const SVG_CLOCK = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+const SVG_MINUS = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+const SVG_ALERT = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+const SVG_EXTERNAL = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+const SVG_REFRESH = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>';
+const SVG_FOLDER = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
+const SVG_ARROW = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+const SVG_DETAIL_X = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+const SVG_DETAIL_ALERT = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+
+const STEP_SVG: Record<StepState, string> = {
+  done: SVG_CHECK,
+  failed: SVG_X,
+  waiting: SVG_CLOCK,
+  neutral: SVG_MINUS,
+};
 
 async function render(): Promise<void> {
   const settings = await getSettings();
@@ -75,7 +96,7 @@ async function render(): Promise<void> {
 
   $("empty-list").style.display = "none";
   $("pr-list").style.display = "block";
-  renderPRList(snapshots);
+  renderPRList(snapshots, settings.projects);
 }
 
 function renderTimestamp(ts: number): void {
@@ -108,7 +129,13 @@ function renderRecentMerged(seenPRs: SeenPRRecord[]): void {
 
   container.style.display = "block";
   container.innerHTML = `
-    <div class="merged-header">✅ Recently merged</div>
+    <div class="merged-header">
+      <div class="merged-label">
+        <div class="merged-icon">${SVG_CHECK}</div>
+        Recently merged
+      </div>
+      <span class="count-pill">${recentMerged.length}</span>
+    </div>
     <div class="merged-list">
       ${recentMerged
         .map((record) => {
@@ -120,8 +147,9 @@ function renderRecentMerged(seenPRs: SeenPRRecord[]): void {
           );
           return `
             <button class="merged-item" data-url="${esc(url)}" aria-label="Open merged pull request ${record.pullRequestId}">
-              <span class="merged-title">PR #${record.pullRequestId} &middot; ${esc(record.title)}</span>
-              <span class="merged-ago">${esc(formatAgo(record.lastSeenAt))}</span>
+              <span class="m-num">#${record.pullRequestId}</span>
+              <span class="m-title">${esc(record.title)}</span>
+              <span class="m-ago">${esc(formatAgo(record.lastSeenAt))}</span>
             </button>
           `;
         })
@@ -155,23 +183,23 @@ async function maybeShowMergedCelebration(seenPRs: SeenPRRecord[]): Promise<void
   await refreshBadgeIcon();
 
   if (unseenMerged.length === 1 && unseenMerged[0]) {
-    renderMergeCelebrationBar(`🎉 Nice merge! PR #${unseenMerged[0].pullRequestId} just landed.`);
+    renderMergeCelebrationBar(`Nice merge! PR #${unseenMerged[0].pullRequestId} just landed.`);
     return;
   }
 
-  renderMergeCelebrationBar(`🎉 Great momentum — ${unseenMerged.length} PRs merged since your last view.`);
+  renderMergeCelebrationBar(`Great momentum — ${unseenMerged.length} PRs merged since your last view.`);
 }
 
 function renderMergeCelebrationBar(message?: string): void {
   const bar = $("merge-celebration-bar");
   if (!message) {
     bar.style.display = "none";
-    bar.textContent = "";
+    bar.innerHTML = "";
     return;
   }
 
-  bar.textContent = message;
-  bar.style.display = "block";
+  bar.innerHTML = `${SVG_CHECK} ${esc(message)}`;
+  bar.style.display = "flex";
 }
 
 async function refreshBadgeIcon(): Promise<void> {
@@ -180,10 +208,15 @@ async function refreshBadgeIcon(): Promise<void> {
   });
 }
 
-function renderPRList(snapshots: PRSnapshot[]): void {
+function renderPRList(snapshots: PRSnapshot[], projects: ProjectConfig[]): void {
   const container = $("pr-list");
+  const projectJiraDomains = new Map<string, string>();
+  for (const project of projects) {
+    if (project.jiraDomain) {
+      projectJiraDomains.set(buildProjectKey(project.organization, project.project), project.jiraDomain);
+    }
+  }
 
-  // Sort: attention-needed first, then by creation date desc
   const sorted = [...snapshots].sort((a, b) => {
     const aAttn = needsAttention(a) ? 0 : 1;
     const bAttn = needsAttention(b) ? 0 : 1;
@@ -191,10 +224,9 @@ function renderPRList(snapshots: PRSnapshot[]): void {
     return new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime();
   });
 
-  container.innerHTML = sorted.map((pr) => renderPRItem(pr)).join("");
+  container.innerHTML = sorted.map((pr) => renderPRItem(pr, projectJiraDomains)).join("");
 
-  // Click handlers
-  container.querySelectorAll(".pr-item").forEach((el) => {
+  container.querySelectorAll(".pr-card").forEach((el) => {
     el.addEventListener("click", () => {
       const url = (el as HTMLElement).dataset["url"];
       if (url) {
@@ -229,55 +261,79 @@ function renderPRList(snapshots: PRSnapshot[]): void {
       }
     });
   });
+
+  container.querySelectorAll(".jira-reminder-link").forEach((el) => {
+    el.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+  });
 }
 
-function renderPRItem(pr: PRSnapshot): string {
+function renderPRItem(pr: PRSnapshot, projectJiraDomains: Map<string, string>): string {
   const url = prUrl(pr.organization, pr.project, pr.repositoryName, pr.pullRequestId);
   const model = toViewModel(pr);
-  const statusClass = getStatusBarClass(pr);
+  const jiraReminder = getJiraReminder(pr, projectJiraDomains);
   const branch = shortenRef(pr.sourceRefName);
   const target = shortenRef(pr.targetRefName);
   const triageLabel = model.triage === "ready" ? "Ready" : model.triage === "blocked" ? "Blocked" : model.triage === "draft" ? "Draft" : "Waiting";
+
+  const primaryBtnClass = model.triage === "blocked" ? "danger" : "primary";
   const secondaryAction =
     model.primaryActionLabel === "Open PR"
-      ? `<button class="pr-action-btn" data-action="refresh">Refresh status</button>`
-      : `<button class="pr-action-btn" data-action="open" data-url="${esc(url)}" data-hint="Opening PR...">Open PR</button>`;
+      ? `<button class="pr-action-btn" data-action="refresh">${SVG_REFRESH} Refresh</button>`
+      : `<button class="pr-action-btn" data-action="open" data-url="${esc(url)}" data-hint="Opening PR...">${SVG_EXTERNAL} Open PR</button>`;
+
+  const pipelineHtml = model.pipeline
+    .map((step) => {
+      const shortLabel = step.label === "Mergeability" ? "Merge" : step.label;
+      return `<div class="pi ${step.state}" aria-label="${esc(step.ariaLabel)}">${STEP_SVG[step.state]} ${shortLabel}</div>`;
+    })
+    .join("");
+
+  const detailsHtml =
+    model.details.length > 0
+      ? `<div class="pr-details">${model.details.map((detail) => `<div class="detail-item">${SVG_DETAIL_ALERT} ${esc(detail)}</div>`).join("")}</div>`
+      : "";
+
+  const jiraHtml = jiraReminder
+    ? `<div class="jira-reminder">
+        ${SVG_ALERT}
+        <div class="jira-reminder-body">
+          <span class="jira-reminder-label">Jira Reminder</span>
+          ${
+            jiraReminder.url
+              ? `<a class="jira-reminder-link" href="${esc(jiraReminder.url)}" target="_blank" rel="noopener noreferrer">Update ${esc(jiraReminder.ticketKey)} status</a>`
+              : `<span class="jira-reminder-text">Update ${esc(jiraReminder.ticketKey)} status (configure Jira domain in settings)</span>`
+          }
+        </div>
+      </div>`
+    : "";
 
   return `
-    <div class="pr-item" data-url="${esc(url)}" role="button" tabindex="0" aria-label="Open pull request ${pr.pullRequestId}">
-      <div class="pr-status-bar ${statusClass}"></div>
-      <div class="pr-content">
+    <div class="pr-card" data-url="${esc(url)}" role="button" tabindex="0" aria-label="Open pull request ${pr.pullRequestId}">
+      <div class="pr-accent ${model.triage}"></div>
+      <div class="pr-body">
         <div class="pr-top">
           <div class="pr-title" title="${esc(pr.title)}">${esc(pr.title)}</div>
           <span class="triage-badge ${model.triage}" aria-label="${esc(`${triageLabel}: ${model.actionLine}`)}">${triageLabel}</span>
         </div>
         <div class="pr-meta">
-          #${pr.pullRequestId} &middot; ${esc(pr.createdByName)} &middot; ${esc(branch)} &rarr; ${esc(target)}
+          <span class="num">#${pr.pullRequestId}</span>
+          <span class="sep">&middot;</span>
+          <span class="author">${esc(pr.createdByName)}</span>
+          <span class="sep">&middot;</span>
+          <span class="branch">${esc(branch)} ${SVG_ARROW} ${esc(target)}</span>
         </div>
-        <div class="pr-action-line">${esc(model.actionLine)}</div>
-        <div class="pipeline">
-          <div class="pipeline-grid">
-            ${model.pipeline
-              .map(
-                (step) => `
-                  <div class="pipeline-step">
-                    <span class="pipeline-label">${step.label}</span>
-                    <span class="pipeline-pill ${step.state}" aria-label="${esc(step.ariaLabel)}">${esc(`${step.icon} ${step.text}`)}</span>
-                  </div>
-                `,
-              )
-              .join("")}
-          </div>
+        <div class="pipeline-row">${pipelineHtml}</div>
+        <div class="pr-action-line">
+          <span class="status-dot ${model.triage}"></span>
+          ${esc(model.actionLine)}
         </div>
-        ${
-          model.details.length > 0
-            ? `<div class="pr-details">${model.details.map((detail) => `<div>&bull; ${esc(detail)}</div>`).join("")}</div>`
-            : ""
-        }
-        <div class="pr-project">${esc(pr.organization)}/${esc(pr.project)}/${esc(pr.repositoryName)}</div>
-        <div class="pr-hint">Click card to open PR</div>
+        ${jiraHtml}
+        ${detailsHtml}
+        <div class="pr-project">${SVG_FOLDER} ${esc(pr.organization)}/${esc(pr.project)}/${esc(pr.repositoryName)}</div>
         <div class="pr-actions">
-          <button class="pr-action-btn primary" data-action="open" data-url="${esc(url)}" data-hint="${esc(model.primaryActionHint)}" aria-label="${esc(model.primaryActionLabel)}">${esc(model.primaryActionLabel)}</button>
+          <button class="pr-action-btn ${primaryBtnClass}" data-action="open" data-url="${esc(url)}" data-hint="${esc(model.primaryActionHint)}" aria-label="${esc(model.primaryActionLabel)}">${model.triage === "blocked" ? SVG_ALERT : SVG_EXTERNAL} ${esc(model.primaryActionLabel)}</button>
           ${secondaryAction}
         </div>
       </div>
@@ -285,14 +341,26 @@ function renderPRItem(pr: PRSnapshot): string {
   `;
 }
 
-function getStatusBarClass(pr: PRSnapshot): string {
-  const checks = Object.values(pr.statusChecks);
-  if (pr.mergeStatus === "conflicts") return "fail";
-  if (checks.some((s) => s === "failed" || s === "error")) return "fail";
-  if (checks.some((s) => s === "pending")) return "pending";
-  if (checks.length > 0 && checks.every((s) => s === "succeeded")) return "ok";
-  if (Object.values(pr.reviewerVotes).some((v) => v === -10)) return "fail";
-  return "pending";
+function getJiraReminder(pr: PRSnapshot, projectJiraDomains: Map<string, string>): { ticketKey: string; url?: string } | null {
+  const ticketKey = extractJiraTicketKey(pr.title);
+  if (!ticketKey) return null;
+
+  const jiraDomain = projectJiraDomains.get(buildProjectKey(pr.organization, pr.project));
+  if (!jiraDomain) {
+    return { ticketKey };
+  }
+  return {
+    ticketKey,
+    url: `https://${jiraDomain}.atlassian.net/browse/${ticketKey}`,
+  };
+}
+
+function extractJiraTicketKey(title: string): string | null {
+  return title.match(JIRA_KEY_RE)?.[1] ?? null;
+}
+
+function buildProjectKey(organization: string, project: string): string {
+  return `${organization.toLowerCase()}::${project.toLowerCase()}`;
 }
 
 function toViewModel(pr: PRSnapshot): PRViewModel {
@@ -476,17 +544,14 @@ function esc(str: string): string {
   return div.innerHTML;
 }
 
-// Refresh button
 $<HTMLButtonElement>("refresh-btn").addEventListener("click", () => {
   void pollNow();
 });
 
-// Settings button
 $<HTMLButtonElement>("settings-btn").addEventListener("click", () => {
   void chrome.runtime.openOptionsPage();
 });
 
-// Open options from empty state
 const openOptionsBtn = document.getElementById("open-options");
 if (openOptionsBtn) {
   openOptionsBtn.addEventListener("click", () => {
@@ -494,5 +559,4 @@ if (openOptionsBtn) {
   });
 }
 
-// Initial render
 void render();

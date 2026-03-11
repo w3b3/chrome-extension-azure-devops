@@ -30,6 +30,11 @@ function renderProjectList(projects: ProjectConfig[]): void {
       <div class="project-info">
         <div class="org-project">${esc(p.organization)} / ${esc(p.project)}</div>
         <div class="user-name">${p.userDisplayName ? `Connected as ${esc(p.userDisplayName)}` : "Not connected"}</div>
+        ${
+          p.jiraDomain
+            ? `<div class="jira-domain">Jira: ${esc(`${p.jiraDomain}.atlassian.net`)}</div>`
+            : `<div class="jira-domain muted">Jira domain not configured</div>`
+        }
       </div>
       <button class="btn btn-danger remove-btn" data-index="${i}">Remove</button>
     </div>
@@ -56,11 +61,13 @@ async function addProject(): Promise<void> {
   const orgInput = $<HTMLInputElement>("org");
   const projectInput = $<HTMLInputElement>("project");
   const patInput = $<HTMLInputElement>("pat");
+  const jiraDomainInput = $<HTMLInputElement>("jira-domain");
   const statusEl = $<HTMLDivElement>("add-status");
 
   const organization = orgInput.value.trim();
   const project = projectInput.value.trim();
   const pat = patInput.value.trim();
+  const jiraDomain = normalizeJiraDomain(jiraDomainInput.value);
 
   if (!organization || !project || !pat) {
     showStatus(statusEl, "All fields are required.", "error");
@@ -87,6 +94,7 @@ async function addProject(): Promise<void> {
       organization,
       project,
       pat,
+      ...(jiraDomain ? { jiraDomain } : {}),
       userId: user.id,
       userDisplayName: user.displayName,
     });
@@ -96,6 +104,7 @@ async function addProject(): Promise<void> {
     orgInput.value = "";
     projectInput.value = "";
     patInput.value = "";
+    jiraDomainInput.value = "";
     showStatus(statusEl, `Connected as ${user.displayName}`, "success");
     renderProjectList(settings.projects);
   } catch (err) {
@@ -127,6 +136,16 @@ function esc(str: string): string {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
+}
+
+function normalizeJiraDomain(raw: string): string {
+  const trimmed = raw.trim().toLowerCase();
+  if (!trimmed) return "";
+
+  const withoutProtocol = trimmed.replace(/^https?:\/\//, "");
+  const withoutPath = withoutProtocol.split("/")[0] ?? "";
+  const withoutSuffix = withoutPath.replace(/\.atlassian\.net$/, "");
+  return withoutSuffix;
 }
 
 // Event listeners

@@ -6,6 +6,8 @@ export interface ProjectConfig {
   project: string;
   /** Personal Access Token with Code (read) scope */
   pat: string;
+  /** Jira domain prefix (e.g. "arancia" for arancia.atlassian.net) */
+  jiraDomain?: string;
   /** Discovered user ID for this org — filled after first successful connection */
   userId?: string;
   /** Display name of the authenticated user */
