@@ -5,6 +5,8 @@
   "description": "Chrome extension to monitor Azure DevOps pull requests and surface notifications",
   "scripts": {
     "build": "node esbuild.config.mjs",
+    "zip": "node scripts/package-extension.mjs",
+    "package": "npm run build && npm run zip",
     "watch": "node esbuild.config.mjs --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint 'src/**/*.ts'",
